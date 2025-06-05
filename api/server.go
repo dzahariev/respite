@@ -113,7 +113,7 @@ func (server *Server) initRouter() {
 	server.Router.Use(loggerMiddleware)
 
 	// Unsecured Home Route
-	server.Router.HandleFunc(server.ServerConfig.APIPath, server.Public(ContentTypeJSON(server.Home))).Methods(http.MethodGet)
+	server.Router.HandleFunc(fmt.Sprintf("/%s/", server.ServerConfig.APIPath), server.Public(ContentTypeJSON(server.Home))).Methods(http.MethodGet)
 	// Register all resource routes
 	for _, resource := range server.ResourceFactory.Resources {
 		server.Router.HandleFunc(fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Create(resource.Name)), resource, WRITE)).Methods(http.MethodPost)
