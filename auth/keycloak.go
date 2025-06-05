@@ -20,7 +20,7 @@ type KeycloakClient struct {
 }
 
 // NewClient is used to init a client for Keycloak authentication
-func NewClient(cfg *cfg.Keycloak) Client {
+func NewClient(cfg cfg.Keycloak) Client {
 	return &KeycloakClient{
 		Client:       gocloak.NewClient(cfg.AuthURL),
 		URL:          cfg.AuthURL,
