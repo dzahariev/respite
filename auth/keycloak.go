@@ -20,12 +20,14 @@ type KeycloakClient struct {
 }
 
 // NewClient is used to init a client for Keycloak authentication
-func (authClient *KeycloakClient) NewClient(cfg *cfg.Keycloak) {
-	authClient.Client = gocloak.NewClient(cfg.AuthURL)
-	authClient.URL = cfg.AuthURL
-	authClient.Realm = cfg.AuthRealm
-	authClient.ClientID = cfg.AuthClientID
-	authClient.ClientSecret = cfg.AuthClientSecret
+func NewClient(cfg *cfg.Keycloak) Client {
+	return &KeycloakClient{
+		Client:       gocloak.NewClient(cfg.AuthURL),
+		URL:          cfg.AuthURL,
+		Realm:        cfg.AuthRealm,
+		ClientID:     cfg.AuthClientID,
+		ClientSecret: cfg.AuthClientSecret,
+	}
 }
 
 func (authClient *KeycloakClient) RetrospectToken(ctx context.Context, accessToken string) error {
