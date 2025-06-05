@@ -53,3 +53,12 @@ func (resourceFactory *ResourceFactory) New(name string) (basemodel.Object, erro
 	}
 	return obj, nil
 }
+
+// IsGlobal is used to check if a resource is global
+func (resourceFactory *ResourceFactory) IsGlobal(name string) bool {
+	resource, ok := resourceFactory.Resources[name]
+	if !ok {
+		return false
+	}
+	return resource.IsGlobal
+}

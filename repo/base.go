@@ -15,8 +15,6 @@ import (
 type contextKey string
 
 const (
-	GLOBAL                     = "global"
-	GLOBAL_SCOPE    contextKey = "globalScope"
 	LOGGER          contextKey = "logger"
 	CURRENT_USER_ID contextKey = "currentUserID"
 )
@@ -40,8 +38,9 @@ func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal
 	}
 }
 
-func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceFactory *ResourceFactory) *Repository {
-	dbScopes := NewDBScopesFromRequest(request)
+func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resourceFactory *ResourceFactory) *Repository {
+	isGlobal := resourceFactory.IsGlobal(resourceName)
+	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 
 	return &Repository{

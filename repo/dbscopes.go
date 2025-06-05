@@ -31,13 +31,13 @@ func NewDBScopes(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal b
 	}
 }
 
-func NewDBScopesFromRequest(request *http.Request) *DBScopes {
+func NewDBScopesFromRequest(request *http.Request, isGlobal bool) *DBScopes {
 	return &DBScopes{
 		PageSize: getPageSize(request),
 		Page:     getPage(request),
 		Offset:   getOffset(request),
 		UserID:   getOwnerID(request),
-		Global:   isGlobal(request),
+		Global:   isGlobal,
 	}
 }
 
@@ -55,11 +55,6 @@ func (dbs *DBScopes) Owned() func(db *gorm.DB) *gorm.DB {
 			return db.Where("user_id = ?", dbs.UserID)
 		}
 	}
-}
-
-// isGlobal Check if current request is global
-func isGlobal(request *http.Request) bool {
-	return (request.Context().Value(GLOBAL_SCOPE) != nil)
 }
 
 // GetOwnerID returns the current request user ID

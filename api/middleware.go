@@ -86,10 +86,6 @@ func (server *Server) Protected(next http.HandlerFunc, resource repo.Resource, p
 		for _, role := range roles {
 			permissions = append(permissions, server.RoleToPermissions[role]...)
 		}
-		// Check for global scope for this resource and if exists add it to the enriched context
-		if resource.IsGlobal {
-			newCtx = context.WithValue(newCtx, repo.GLOBAL_SCOPE, repo.GLOBAL)
-		}
 		// Replace request context
 		rWithUpdatedContext := r.WithContext(newCtx)
 		// Check permissions
