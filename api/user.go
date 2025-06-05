@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/dzahariev/respite/basemodel"
+	"github.com/dzahariev/respite/repo"
 	"github.com/gofrs/uuid/v5"
 )
 
 // DBLoadUser loads an user by given ID
 func (server *Server) DBLoadUser(ctx context.Context, userID string) (*basemodel.User, error) {
-	logger := GetLogger(ctx)
+	logger := repo.GetLogger(ctx)
 	logger.Debug("DBLoadUser request received", "userID", userID)
 	uid, err := uuid.FromString(userID)
 	if err != nil {
@@ -27,7 +28,7 @@ func (server *Server) DBLoadUser(ctx context.Context, userID string) (*basemodel
 
 // DBSaveUser is caled to save an user
 func (server *Server) DBSaveUser(ctx context.Context, user *basemodel.User) error {
-	logger := GetLogger(ctx)
+	logger := repo.GetLogger(ctx)
 	logger.Debug("DBSaveUser request received", "user", user)
 	err := user.Save(ctx, server.DB, user)
 
