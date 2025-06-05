@@ -26,11 +26,11 @@ type Repository struct {
 	RequestID uuid.UUID
 }
 
-func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool, dataBase *gorm.DB, resources *Resources) *Repository {
+func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool, dataBase *gorm.DB, resources *Resources) Repository {
 	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
 	dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 
-	return &Repository{
+	return Repository{
 		DB:        dataBase,
 		DBScopes:  dbScopes,
 		Resources: resources,
@@ -38,12 +38,12 @@ func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal
 	}
 }
 
-func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resources *Resources) *Repository {
+func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resources *Resources) Repository {
 	isGlobal := resources.IsGlobal(resourceName)
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 
-	return &Repository{
+	return Repository{
 		DB:        dataBase,
 		DBScopes:  dbScopes,
 		Resources: resources,

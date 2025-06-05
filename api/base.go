@@ -17,7 +17,7 @@ func (server *Server) GetAll(resourceName string) http.HandlerFunc {
 		logger := GetLogger(ctx)
 		logger.Debug("GetAll request received", "resource", resourceName)
 		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
-		logger.Debug("Repository created", "resource", resourceName, "repository", repository)
+		logger.Debug("Repository created", "resource", resourceName, "dbscopes", repository.DBScopes)
 		list, err := repository.GetAll(ctx, resourceName)
 		if err != nil {
 			logger.Error("Error getting all objects", "error", err)
