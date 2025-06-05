@@ -10,8 +10,8 @@ import (
 	"syscall"
 
 	"github.com/dzahariev/respite/auth"
+	"github.com/dzahariev/respite/basemodel"
 	"github.com/dzahariev/respite/cfg"
-	"github.com/dzahariev/respite/model"
 	"github.com/dzahariev/respite/repo"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
@@ -33,7 +33,7 @@ type Server struct {
 	RoleToPermissions map[string][]string
 }
 
-func NewServer(serverConfig cfg.Server, logConfig cfg.Logger, dbConfig cfg.DataBase, modelObjects []model.Object, authClient auth.Client, roleToPermissions map[string][]string) (*Server, error) {
+func NewServer(serverConfig cfg.Server, logConfig cfg.Logger, dbConfig cfg.DataBase, modelObjects []basemodel.Object, authClient auth.Client, roleToPermissions map[string][]string) (*Server, error) {
 	// Initialise server instance
 	server := &Server{}
 	// Keep configuration
@@ -96,10 +96,10 @@ func (server *Server) initDB(dbConfig cfg.DataBase) error {
 }
 
 // initResourceFactory is used to register all resources
-func (server *Server) initResourceFactory(modelObjects []model.Object) {
+func (server *Server) initResourceFactory(modelObjects []basemodel.Object) {
 	server.ResourceFactory = &repo.ResourceFactory{Resources: map[string]repo.Resource{}}
 	// Register user resource
-	server.ResourceFactory.Register(&model.User{})
+	server.ResourceFactory.Register(&basemodel.User{})
 	// Register all other provided resources
 	for _, modelObject := range modelObjects {
 		server.ResourceFactory.Register(modelObject)

@@ -1,4 +1,4 @@
-package model
+package basemodel
 
 // List holds technical fields
 type List struct {

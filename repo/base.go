@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/dzahariev/respite/model"
+	"github.com/dzahariev/respite/basemodel"
 	"github.com/gofrs/uuid/v5"
 	"gorm.io/gorm"
 )
@@ -53,7 +53,7 @@ func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resource
 }
 
 // GetAll retrieves all objects
-func (repository *Repository) GetAll(ctx context.Context, resourceName string) (*model.List, error) {
+func (repository *Repository) GetAll(ctx context.Context, resourceName string) (*basemodel.List, error) {
 	var err error
 	object, err := repository.ResourceFactory.New(resourceName)
 	if err != nil {
@@ -70,7 +70,7 @@ func (repository *Repository) GetAll(ctx context.Context, resourceName string) (
 		return nil, err
 	}
 
-	list := &model.List{
+	list := &basemodel.List{
 		Count:    count,
 		PageSize: repository.DBScopes.PageSize,
 		Page:     repository.DBScopes.Page,
@@ -81,7 +81,7 @@ func (repository *Repository) GetAll(ctx context.Context, resourceName string) (
 }
 
 // Get loads an object by given ID
-func (repository *Repository) Get(ctx context.Context, resourceName string, uid uuid.UUID) (model.Object, error) {
+func (repository *Repository) Get(ctx context.Context, resourceName string, uid uuid.UUID) (basemodel.Object, error) {
 	object, err := repository.ResourceFactory.New(resourceName)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (repository *Repository) Get(ctx context.Context, resourceName string, uid 
 }
 
 // Create is caled to create an object
-func (repository *Repository) Create(ctx context.Context, resourceName string, jsonObject []byte) (model.Object, error) {
+func (repository *Repository) Create(ctx context.Context, resourceName string, jsonObject []byte) (basemodel.Object, error) {
 	object, err := repository.ResourceFactory.New(resourceName)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (repository *Repository) Create(ctx context.Context, resourceName string, j
 		if ownerUUID == nil {
 			return nil, err
 		}
-		objectAsLocalObject := object.(model.LocalObject)
+		objectAsLocalObject := object.(basemodel.LocalObject)
 		objectAsLocalObject.SetUserID(*ownerUUID)
 	}
 
@@ -130,7 +130,7 @@ func (repository *Repository) Create(ctx context.Context, resourceName string, j
 }
 
 // UpdateBook updates existing object
-func (repository *Repository) Update(ctx context.Context, resourceName string, uid uuid.UUID, jsonObject []byte) (model.Object, error) {
+func (repository *Repository) Update(ctx context.Context, resourceName string, uid uuid.UUID, jsonObject []byte) (basemodel.Object, error) {
 	object, err := repository.ResourceFactory.New(resourceName)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (repository *Repository) Update(ctx context.Context, resourceName string, u
 		return nil, err
 	}
 
-	recordExisting := reflect.New(reflect.TypeOf(object).Elem()).Interface().(model.Object)
+	recordExisting := reflect.New(reflect.TypeOf(object).Elem()).Interface().(basemodel.Object)
 	err = recordExisting.FindByID(ctx, repository.DB, recordExisting, uid)
 	if err != nil {
 		return nil, err
