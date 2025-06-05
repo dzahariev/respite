@@ -29,7 +29,7 @@ type Server struct {
 	DB                *gorm.DB
 	Router            *mux.Router
 	AuthClient        auth.Client
-	ResourceFactory   *repo.ResourceFactory
+	Resources         *repo.Resources
 	RoleToPermissions map[string][]string
 }
 
@@ -97,14 +97,14 @@ func (server *Server) initDB(dbConfig cfg.DataBase) error {
 
 // initResourceFactory is used to register all resources
 func (server *Server) initResourceFactory(modelObjects []basemodel.Object) {
-	server.ResourceFactory = &repo.ResourceFactory{Resources: map[string]repo.Resource{}}
+	server.Resources = &repo.Resources{Resources: map[string]repo.Resource{}}
 	// Register user resource
-	server.ResourceFactory.Register(&basemodel.User{})
+	server.Resources.Register(&basemodel.User{})
 	// Register all other provided resources
 	for _, modelObject := range modelObjects {
-		server.ResourceFactory.Register(modelObject)
+		server.Resources.Register(modelObject)
 	}
-	slog.Info("Resource factory initialized", "resources", server.ResourceFactory.Names())
+	slog.Info("Resource factory initialized", "resources", server.Resources.Names())
 }
 
 // initRouter is used to register routes
@@ -115,7 +115,7 @@ func (server *Server) initRouter() {
 	// Unsecured Home Route
 	server.Router.HandleFunc(fmt.Sprintf("/%s/", server.ServerConfig.APIPath), server.Public(ContentTypeJSON(server.Home))).Methods(http.MethodGet)
 	// Register all resource routes
-	for _, resource := range server.ResourceFactory.Resources {
+	for _, resource := range server.Resources.Resources {
 		server.Router.HandleFunc(fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Create(resource.Name)), resource, WRITE)).Methods(http.MethodPost)
 		server.Router.HandleFunc(fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.GetAll(resource.Name)), resource, READ)).Methods(http.MethodGet)
 		server.Router.HandleFunc(fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Get(resource.Name)), resource, READ)).Methods(http.MethodGet)

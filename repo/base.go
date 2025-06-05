@@ -20,41 +20,41 @@ const (
 )
 
 type Repository struct {
-	DB              *gorm.DB
-	DBScopes        *DBScopes
-	ResourceFactory *ResourceFactory
-	RequestID       uuid.UUID
+	DB        *gorm.DB
+	DBScopes  DBScopes
+	Resources *Resources
+	RequestID uuid.UUID
 }
 
-func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool, dataBase *gorm.DB, resourceFactory *ResourceFactory) *Repository {
+func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool, dataBase *gorm.DB, resources *Resources) *Repository {
 	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
 	dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 
 	return &Repository{
-		DB:              dataBase,
-		DBScopes:        dbScopes,
-		ResourceFactory: resourceFactory,
-		RequestID:       uuid.Must(uuid.NewV4()),
+		DB:        dataBase,
+		DBScopes:  dbScopes,
+		Resources: resources,
+		RequestID: uuid.Must(uuid.NewV4()),
 	}
 }
 
-func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resourceFactory *ResourceFactory) *Repository {
-	isGlobal := resourceFactory.IsGlobal(resourceName)
+func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resources *Resources) *Repository {
+	isGlobal := resources.IsGlobal(resourceName)
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 
 	return &Repository{
-		DB:              dataBase,
-		DBScopes:        dbScopes,
-		ResourceFactory: resourceFactory,
-		RequestID:       uuid.Must(uuid.NewV4()),
+		DB:        dataBase,
+		DBScopes:  dbScopes,
+		Resources: resources,
+		RequestID: uuid.Must(uuid.NewV4()),
 	}
 }
 
 // GetAll retrieves all objects
 func (repository *Repository) GetAll(ctx context.Context, resourceName string) (*basemodel.List, error) {
 	var err error
-	object, err := repository.ResourceFactory.New(resourceName)
+	object, err := repository.Resources.New(resourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (repository *Repository) GetAll(ctx context.Context, resourceName string) (
 
 // Get loads an object by given ID
 func (repository *Repository) Get(ctx context.Context, resourceName string, uid uuid.UUID) (basemodel.Object, error) {
-	object, err := repository.ResourceFactory.New(resourceName)
+	object, err := repository.Resources.New(resourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (repository *Repository) Get(ctx context.Context, resourceName string, uid 
 
 // Create is caled to create an object
 func (repository *Repository) Create(ctx context.Context, resourceName string, jsonObject []byte) (basemodel.Object, error) {
-	object, err := repository.ResourceFactory.New(resourceName)
+	object, err := repository.Resources.New(resourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (repository *Repository) Create(ctx context.Context, resourceName string, j
 
 // UpdateBook updates existing object
 func (repository *Repository) Update(ctx context.Context, resourceName string, uid uuid.UUID, jsonObject []byte) (basemodel.Object, error) {
-	object, err := repository.ResourceFactory.New(resourceName)
+	object, err := repository.Resources.New(resourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (repository *Repository) Update(ctx context.Context, resourceName string, u
 
 // Delete deletes an object
 func (repository *Repository) Delete(ctx context.Context, resourceName string, uid uuid.UUID) error {
-	object, err := repository.ResourceFactory.New(resourceName)
+	object, err := repository.Resources.New(resourceName)
 	if err != nil {
 		return err
 	}

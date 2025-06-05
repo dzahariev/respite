@@ -14,17 +14,17 @@ type Resource struct {
 	Type     reflect.Type
 }
 
-// ResourceFactory is used to hold information about supported resources
-type ResourceFactory struct {
+// Resources is used to hold information about supported resources
+type Resources struct {
 	Resources map[string]Resource
 }
 
 // Register is used to register a resource type
-func (resourceFactory *ResourceFactory) Register(object basemodel.Object) {
+func (resources *Resources) Register(object basemodel.Object) {
 	name := object.ResourceName()
 	isGlobal := object.IsGlobal()
 	objectType := reflect.TypeOf(object).Elem()
-	resourceFactory.Resources[name] = Resource{
+	resources.Resources[name] = Resource{
 		Name:     name,
 		IsGlobal: isGlobal,
 		Type:     objectType,
@@ -32,17 +32,17 @@ func (resourceFactory *ResourceFactory) Register(object basemodel.Object) {
 }
 
 // Names returns the names of all registered resources
-func (resourceFactory *ResourceFactory) Names() []string {
-	names := make([]string, 0, len(resourceFactory.Resources))
-	for name := range resourceFactory.Resources {
+func (resources *Resources) Names() []string {
+	names := make([]string, 0, len(resources.Resources))
+	for name := range resources.Resources {
 		names = append(names, name)
 	}
 	return names
 }
 
 // New is used to create a new resource object
-func (resourceFactory *ResourceFactory) New(name string) (basemodel.Object, error) {
-	t, ok := resourceFactory.Resources[name]
+func (resources *Resources) New(name string) (basemodel.Object, error) {
+	t, ok := resources.Resources[name]
 	if !ok {
 		return nil, fmt.Errorf("unrecognized resource name: %s", name)
 	}
@@ -55,8 +55,8 @@ func (resourceFactory *ResourceFactory) New(name string) (basemodel.Object, erro
 }
 
 // IsGlobal is used to check if a resource is global
-func (resourceFactory *ResourceFactory) IsGlobal(name string) bool {
-	resource, ok := resourceFactory.Resources[name]
+func (resources *Resources) IsGlobal(name string) bool {
+	resource, ok := resources.Resources[name]
 	if !ok {
 		return false
 	}

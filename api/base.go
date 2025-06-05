@@ -16,8 +16,8 @@ func (server *Server) GetAll(resourceName string) http.HandlerFunc {
 		ctx := r.Context()
 		logger := GetLogger(ctx)
 		logger.Debug("GetAll request received", "resource", resourceName)
-		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.ResourceFactory)
-
+		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
+		logger.Debug("Repository created", "resource", resourceName, "repository", repository)
 		list, err := repository.GetAll(ctx, resourceName)
 		if err != nil {
 			logger.Error("Error getting all objects", "error", err)
@@ -43,7 +43,7 @@ func (server *Server) Get(resourceName string) http.HandlerFunc {
 			return
 		}
 
-		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.ResourceFactory)
+		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
 		object, err := repository.Get(ctx, resourceName, uid)
 		if err != nil {
 			//TODO If the object is not found, return 404 otherwise return 500
@@ -68,7 +68,7 @@ func (server *Server) Create(resourceName string) http.HandlerFunc {
 			ERROR(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.ResourceFactory)
+		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
 		object, err := repository.Create(ctx, resourceName, body)
 		if err != nil {
 			logger.Error("Error creating object", "error", err)
@@ -102,7 +102,7 @@ func (server *Server) Update(resourceName string) http.HandlerFunc {
 			ERROR(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.ResourceFactory)
+		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
 		object, err := repository.Update(ctx, resourceName, uid, body)
 		if err != nil {
 			logger.Error("Error updating object", "error", err)
@@ -128,7 +128,7 @@ func (server *Server) Delete(resourceName string) http.HandlerFunc {
 			ERROR(w, http.StatusBadRequest, err)
 			return
 		}
-		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.ResourceFactory)
+		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
 		err = repository.Delete(ctx, resourceName, uid)
 		if err != nil {
 			logger.Error("Error deleting object", "error", err)

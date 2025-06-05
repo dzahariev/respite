@@ -21,8 +21,8 @@ type DBScopes struct {
 	Global   bool
 }
 
-func NewDBScopes(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool) *DBScopes {
-	return &DBScopes{
+func NewDBScopes(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool) DBScopes {
+	return DBScopes{
 		PageSize: pageSize,
 		Page:     pageNumber,
 		Offset:   offset,
@@ -31,8 +31,8 @@ func NewDBScopes(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal b
 	}
 }
 
-func NewDBScopesFromRequest(request *http.Request, isGlobal bool) *DBScopes {
-	return &DBScopes{
+func NewDBScopesFromRequest(request *http.Request, isGlobal bool) DBScopes {
+	return DBScopes{
 		PageSize: getPageSize(request),
 		Page:     getPage(request),
 		Offset:   getOffset(request),

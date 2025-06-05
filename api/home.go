@@ -9,5 +9,5 @@ func (server *Server) Home(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := GetLogger(ctx)
 	logger.Debug("Home request received")
-	JSON(w, http.StatusOK, server.ResourceFactory.Names())
+	JSON(w, http.StatusOK, server.Resources.Names())
 }
