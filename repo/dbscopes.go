@@ -111,7 +111,7 @@ func getCurrentUserPermissions(request *http.Request) []string {
 	if request.Context().Value(CURRENT_USER_PERMISSIONS) == nil {
 		return nil
 	}
-	if permissions, ok := request.Context().Value(CURRENT_USER_ID).([]string); ok {
+	if permissions, ok := request.Context().Value(CURRENT_USER_PERMISSIONS).([]string); ok {
 		return permissions
 	}
 	return []string{}
