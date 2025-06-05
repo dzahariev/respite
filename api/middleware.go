@@ -28,7 +28,7 @@ func (server *Server) Public(next http.HandlerFunc) http.HandlerFunc {
 func (server *Server) Protected(next http.HandlerFunc, resource repo.Resource, permission string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := repo.GetLogger(ctx)
 		// Parse token
 		authHeader := r.Header.Get("Authorization")
 		if len(authHeader) < 7 {
@@ -110,14 +110,6 @@ func loggerMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), repo.LOGGER, logger)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// GetLogger is a helper to get logger from context or fallback
-func GetLogger(ctx context.Context) *slog.Logger {
-	if logger, ok := ctx.Value(repo.LOGGER).(*slog.Logger); ok {
-		return logger
-	}
-	return slog.Default()
 }
 
 // ContentTypeJSON set the content type to JSON

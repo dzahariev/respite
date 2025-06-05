@@ -14,7 +14,7 @@ import (
 func (server *Server) GetAll(resourceName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := repo.GetLogger(ctx)
 		logger.Debug("GetAll request received", "resource", resourceName)
 		repository := repo.NewRepositoryFromRequest(r, server.DB, resourceName, server.Resources)
 		logger.Debug("Repository created", "resource", resourceName, "dbscopes", repository.DBScopes)
@@ -33,7 +33,7 @@ func (server *Server) GetAll(resourceName string) http.HandlerFunc {
 func (server *Server) Get(resourceName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := repo.GetLogger(ctx)
 		logger.Debug("Get request received", "resource", resourceName)
 		vars := mux.Vars(r)
 		uid, err := uuid.FromString(vars["id"])
@@ -60,7 +60,7 @@ func (server *Server) Get(resourceName string) http.HandlerFunc {
 func (server *Server) Create(resourceName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := repo.GetLogger(ctx)
 		logger.Debug("Create request received", "resource", resourceName)
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -86,7 +86,7 @@ func (server *Server) Create(resourceName string) http.HandlerFunc {
 func (server *Server) Update(resourceName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := repo.GetLogger(ctx)
 		logger.Debug("Update request received", "resource", resourceName)
 		vars := mux.Vars(r)
 		uid, err := uuid.FromString(vars["id"])
@@ -118,7 +118,7 @@ func (server *Server) Update(resourceName string) http.HandlerFunc {
 func (server *Server) Delete(resourceName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := repo.GetLogger(ctx)
 		logger.Debug("Delete request received", "resource", resourceName)
 		vars := mux.Vars(r)
 

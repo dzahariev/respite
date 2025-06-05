@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"reflect"
 
@@ -27,10 +28,21 @@ type Repository struct {
 	RequestID uuid.UUID
 }
 
+// GetLogger is a helper to get logger from context or fallback
+func GetLogger(ctx context.Context) *slog.Logger {
+	if logger, ok := ctx.Value(LOGGER).(*slog.Logger); ok {
+		return logger
+	}
+	return slog.Default()
+}
+
+// NewRepository creates a new repository instance
 func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, resourceName string, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) Repository {
 	isGlobal := resources.IsGlobal(resourceName)
 	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
 	requestDatabase := dataBase.Scopes(dbScopes.Paginate())
+	// If resource is not global and user do not have global permissions,
+	// we scope the database to only owned resources
 	if !isGlobal && !haveGlobalPermission(resourceName, currentUserPermissions) {
 		requestDatabase = dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 	}
@@ -47,7 +59,8 @@ func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resource
 	isGlobal := resources.IsGlobal(resourceName)
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	currentUserPermissions := getCurrentUserPermissions(request)
-
+	logger := GetLogger(request.Context())
+	logger.Debug("Creating new repository", "resource", resourceName, "dbScopes", dbScopes, "userID", dbScopes.UserID, "global", isGlobal, "permissions", currentUserPermissions)
 	return NewRepository(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.UserID, resourceName, dataBase, resources, currentUserPermissions)
 }
 
