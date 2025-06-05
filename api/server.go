@@ -75,9 +75,9 @@ func (server *Server) initLogger(logConfig cfg.Logger) {
 	}
 	var logHandler slog.Handler
 	if logConfig.Format == "json" {
-		logHandler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel, AddSource: true})
+		logHandler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel})
 	} else {
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel, AddSource: true})
+		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel})
 	}
 	slog.SetDefault(slog.New(logHandler))
 	slog.Info("Logger initialized", "level", logConfig.Level, "format", logConfig.Format)

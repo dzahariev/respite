@@ -21,7 +21,7 @@ func (u *User) Validate(ctx context.Context) error {
 }
 
 func (u *User) Prepare(ctx context.Context) error {
-	err := u.BasePrepare()
+	err := u.BasePrepare(ctx)
 	if err != nil {
 		return err
 	}

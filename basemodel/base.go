@@ -73,17 +73,17 @@ func (b *Base) Preloads() []string {
 }
 
 // Prepare is a hook that is called before saving
-func (b *Base) Prepare() error {
+func (b *Base) Prepare(ctx context.Context) error {
 	return nil
 }
 
 // Validate checks structure consistency
-func (b *Base) Validate() error {
+func (b *Base) Validate(ctx context.Context) error {
 	return nil
 }
 
 // BasePrepare initilises techncal fields
-func (b *Base) BasePrepare() error {
+func (b *Base) BasePrepare(ctx context.Context) error {
 	if b.ID.IsNil() {
 		uuid, err := uuid.NewV4()
 		if err != nil {
