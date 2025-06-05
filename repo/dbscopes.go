@@ -1,11 +1,17 @@
 package repo
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gofrs/uuid/v5"
 	"gorm.io/gorm"
+)
+
+const (
+	GLOBAL = "global"
 )
 
 var (
@@ -36,7 +42,7 @@ func NewDBScopesFromRequest(request *http.Request, isGlobal bool) DBScopes {
 		PageSize: getPageSize(request),
 		Page:     getPage(request),
 		Offset:   getOffset(request),
-		UserID:   getOwnerID(request),
+		UserID:   getCurrentUserID(request),
 		Global:   isGlobal,
 	}
 }
@@ -57,8 +63,8 @@ func (dbs *DBScopes) Owned() func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-// GetOwnerID returns the current request user ID
-func getOwnerID(request *http.Request) *uuid.UUID {
+// getCurrentUserID returns the current request user ID
+func getCurrentUserID(request *http.Request) *uuid.UUID {
 	if request.Context().Value(CURRENT_USER_ID) == nil {
 		return nil
 	}
@@ -98,4 +104,26 @@ func getPage(request *http.Request) int {
 
 func getOffset(request *http.Request) int {
 	return (getPage(request) - 1) * getPageSize(request)
+}
+
+// getCurrentUserPermissions returns the current request user ID
+func getCurrentUserPermissions(request *http.Request) []string {
+	if request.Context().Value(CURRENT_USER_PERMISSIONS) == nil {
+		return nil
+	}
+	if permissions, ok := request.Context().Value(CURRENT_USER_ID).([]string); ok {
+		return permissions
+	}
+	return []string{}
+}
+
+// haveGlobalPermission is to check if the global permission for the resource is present in the list of permissions
+func haveGlobalPermission(resource string, permissions []string) bool {
+	for _, currentPermission := range permissions {
+		resourcePermission := fmt.Sprintf("%s.%s", resource, GLOBAL)
+		if strings.EqualFold(currentPermission, resourcePermission) {
+			return true
+		}
+	}
+	return false
 }

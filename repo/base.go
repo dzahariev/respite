@@ -15,8 +15,9 @@ import (
 type contextKey string
 
 const (
-	LOGGER          contextKey = "logger"
-	CURRENT_USER_ID contextKey = "currentUserID"
+	LOGGER                   contextKey = "logger"
+	CURRENT_USER_ID          contextKey = "currentUserID"
+	CURRENT_USER_PERMISSIONS contextKey = "currentUserPermissions"
 )
 
 type Repository struct {
@@ -26,9 +27,13 @@ type Repository struct {
 	RequestID uuid.UUID
 }
 
-func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool, dataBase *gorm.DB, resources *Resources) Repository {
+func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, resourceName string, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) Repository {
+	isGlobal := resources.IsGlobal(resourceName)
 	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
-	requestDatabase := dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
+	requestDatabase := dataBase.Scopes(dbScopes.Paginate())
+	if !isGlobal && !haveGlobalPermission(resourceName, currentUserPermissions) {
+		requestDatabase = dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
+	}
 
 	return Repository{
 		DB:        requestDatabase,
@@ -41,14 +46,9 @@ func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal
 func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resources *Resources) Repository {
 	isGlobal := resources.IsGlobal(resourceName)
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
-	requestDatabase := dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
+	currentUserPermissions := getCurrentUserPermissions(request)
 
-	return Repository{
-		DB:        requestDatabase,
-		DBScopes:  dbScopes,
-		Resources: resources,
-		RequestID: uuid.Must(uuid.NewV4()),
-	}
+	return NewRepository(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.UserID, resourceName, dataBase, resources, currentUserPermissions)
 }
 
 // GetAll retrieves all objects

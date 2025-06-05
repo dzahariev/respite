@@ -74,7 +74,7 @@ func (server *Server) Protected(next http.HandlerFunc, resource repo.Resource, p
 			return
 		}
 		// Create new context with current user
-		newCtx := context.WithValue(ctx, repo.CURRENT_USER_ID, loadedUser.ID.String())
+		ctxWithUserID := context.WithValue(ctx, repo.CURRENT_USER_ID, loadedUser.ID.String())
 		// Get roles from token
 		roles, err := server.AuthClient.GetRolesFromToken(ctx, tokenString)
 		if err != nil {
@@ -86,8 +86,10 @@ func (server *Server) Protected(next http.HandlerFunc, resource repo.Resource, p
 		for _, role := range roles {
 			permissions = append(permissions, server.RoleToPermissions[role]...)
 		}
+		// Create new context with current user permissions
+		ctxWithUserIDAndPermissions := context.WithValue(ctxWithUserID, repo.CURRENT_USER_PERMISSIONS, permissions)
 		// Replace request context
-		rWithUpdatedContext := r.WithContext(newCtx)
+		rWithUpdatedContext := r.WithContext(ctxWithUserIDAndPermissions)
 		// Check permissions
 		if havePermission(resource.Name, permission, permissions) {
 			next(w, rWithUpdatedContext)
@@ -148,7 +150,7 @@ func ERROR(w http.ResponseWriter, statusCode int, err error) {
 	JSON(w, http.StatusBadRequest, nil)
 }
 
-// Check if the permission for the resource is present in the list of permissions
+// havePermission is to check if the permission for the resource is present in the list of permissions
 func havePermission(resource, permission string, permissions []string) bool {
 	for _, currentPermission := range permissions {
 		resourcePermission := fmt.Sprintf("%s.%s", resource, permission)
