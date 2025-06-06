@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "assignees": [
+    "dzahariev"
+  ],
+  "extends": [
+    "config:recommended",
+    "schedule:daily",
+    "docker:enableMajor",
+    ":dependencyDashboard"
+  ],
+  "automergeType": "pr",
+  "prCreation": "immediate",
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "prHourlyLimit": 0,
+  "ignoreTests": true
+}
