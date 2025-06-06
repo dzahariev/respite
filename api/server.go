@@ -124,6 +124,8 @@ func (server *Server) initRouter() {
 	}
 	// Static Route
 	server.Router.PathPrefix("/").Handler(server.Static())
+	// Healthcheck Route
+	server.Router.HandleFunc("/healthz", server.Health()).Methods(http.MethodGet)
 	slog.Info("Router initialized", "routes", server.Router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		path, err := route.GetPathTemplate()
 		if err != nil {

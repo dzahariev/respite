@@ -17,6 +17,14 @@ func (server *Server) Static() http.Handler {
 	return http.FileServer(http.Dir("./public"))
 }
 
+// Wrapper for static resources
+func (server *Server) Health() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "OK")
+	}
+}
+
 // Wrapper for public resources
 func (server *Server) Public(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
