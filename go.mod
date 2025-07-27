@@ -7,7 +7,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/gorilla/mux v1.8.1
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.30.0
+	gorm.io/gorm v1.30.1
 )
 
 require (
