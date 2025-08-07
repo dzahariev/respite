@@ -39,7 +39,7 @@ func GetRequestContext(ctx context.Context) *RequestContext {
 }
 
 // NewRequestContextWithDetails creates a new RequestContext instance
-func NewRequestContextWithDetails(pageSize, pageNumber, offset int, userID *uuid.UUID, resource Resource, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) RequestContext {
+func NewRequestContextWithDetails(pageSize, pageNumber, offset int, userID *uuid.UUID, resource Resource, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) *RequestContext {
 	isGlobal := resources.IsGlobal(resource.Name)
 	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
 	requestDatabase := dataBase.Scopes(dbScopes.Paginate())
@@ -49,7 +49,7 @@ func NewRequestContextWithDetails(pageSize, pageNumber, offset int, userID *uuid
 		requestDatabase = dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 	}
 
-	return RequestContext{
+	return &RequestContext{
 		DB:        requestDatabase,
 		DBScopes:  dbScopes,
 		Resource:  resource,
@@ -58,12 +58,12 @@ func NewRequestContextWithDetails(pageSize, pageNumber, offset int, userID *uuid
 	}
 }
 
-func NewRequestContext(request *http.Request, dataBase *gorm.DB, resource Resource, resources *Resources) RequestContext {
+func NewRequestContext(request *http.Request, dataBase *gorm.DB, resource Resource, resources *Resources) *RequestContext {
 	isGlobal := resources.IsGlobal(resource.Name)
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	currentUserPermissions := getCurrentUserPermissions(request)
 	logger := GetLogger(request.Context())
-	logger.Debug("Creating new repository", "resource", resource.Name, "dbScopes", dbScopes, "userID", dbScopes.UserID, "global", isGlobal, "permissions", currentUserPermissions)
+	logger.Debug("Creating new request context", "resource", resource.Name, "dbScopes", dbScopes, "userID", dbScopes.UserID, "global", isGlobal, "permissions", currentUserPermissions)
 	return NewRequestContextWithDetails(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.UserID, resource, dataBase, resources, currentUserPermissions)
 }
 

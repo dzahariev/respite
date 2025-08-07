@@ -38,7 +38,7 @@ func (server *Server) WithResource(resource common.Resource, next http.HandlerFu
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestContext := common.NewRequestContext(r, server.DB, resource, server.Resources)
 		ctx := context.WithValue(r.Context(), common.RequestContextKey, requestContext)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next(w, r.WithContext(ctx))
 	})
 }
 
