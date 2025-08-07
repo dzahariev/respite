@@ -25,20 +25,16 @@ type RequestContext struct {
 // GetLogger is a helper to get logger from context or fallback
 func GetLogger(ctx context.Context) *slog.Logger {
 	if logger, ok := ctx.Value(LoggerKey).(*slog.Logger); ok {
-		fmt.Printf("logger found")
 		return logger
 	}
-	fmt.Printf("logger not found")
 	return slog.Default()
 }
 
 // GetRequestContext is a helper to get RequestContext from context or nil if there is no such
 func GetRequestContext(ctx context.Context) *RequestContext {
 	if requestContext, ok := ctx.Value(RequestContextKey).(*RequestContext); ok {
-		fmt.Printf("requestContext found")
 		return requestContext
 	}
-	fmt.Printf("requestContext not found")
 	return nil
 }
 
