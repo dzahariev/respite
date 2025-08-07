@@ -65,10 +65,10 @@ func (dbs *DBScopes) Owned() func(db *gorm.DB) *gorm.DB {
 
 // getCurrentUserID returns the current request user ID
 func getCurrentUserID(request *http.Request) *uuid.UUID {
-	if request.Context().Value(CURRENT_USER_ID) == nil {
+	if request.Context().Value(CurrentUserIDKey) == nil {
 		return nil
 	}
-	if userID, ok := request.Context().Value(CURRENT_USER_ID).(string); ok {
+	if userID, ok := request.Context().Value(CurrentUserIDKey).(string); ok {
 		if userID == "" {
 			return nil
 		}
@@ -108,10 +108,10 @@ func getOffset(request *http.Request) int {
 
 // getCurrentUserPermissions returns the current request user ID
 func getCurrentUserPermissions(request *http.Request) []string {
-	if request.Context().Value(CURRENT_USER_PERMISSIONS) == nil {
+	if request.Context().Value(CurrentUserPermissionsKey) == nil {
 		return nil
 	}
-	if permissions, ok := request.Context().Value(CURRENT_USER_PERMISSIONS).([]string); ok {
+	if permissions, ok := request.Context().Value(CurrentUserPermissionsKey).([]string); ok {
 		return permissions
 	}
 	return []string{}

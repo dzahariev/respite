@@ -116,11 +116,13 @@ func (server *Server) initRouter() {
 	server.Router.HandleFunc(fmt.Sprintf("/%s/", server.ServerConfig.APIPath), server.Public(ContentTypeJSON(server.Home))).Methods(http.MethodGet)
 	// Register all resource routes
 	for _, resource := range server.Resources.Resources {
-		server.Router.HandleFunc(fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Create(resource.Name)), resource, WRITE)).Methods(http.MethodPost)
-		server.Router.HandleFunc(fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.GetAll(resource.Name)), resource, READ)).Methods(http.MethodGet)
-		server.Router.HandleFunc(fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Get(resource.Name)), resource, READ)).Methods(http.MethodGet)
-		server.Router.HandleFunc(fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Update(resource.Name)), resource, WRITE)).Methods(http.MethodPut)
-		server.Router.HandleFunc(fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name), server.Protected(ContentTypeJSON(server.Delete(resource.Name)), resource, WRITE)).Methods(http.MethodDelete)
+		apiResPath := fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name)
+		apiResIDPath := fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name)
+		server.Router.HandleFunc(apiResPath, server.WithResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Create())))).Methods(http.MethodPost)
+		server.Router.HandleFunc(apiResPath, server.WithResource(resource, server.Protected(READ, ContentTypeJSON(server.GetAll())))).Methods(http.MethodGet)
+		server.Router.HandleFunc(apiResIDPath, server.WithResource(resource, server.Protected(READ, ContentTypeJSON(server.Get())))).Methods(http.MethodGet)
+		server.Router.HandleFunc(apiResIDPath, server.WithResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Update())))).Methods(http.MethodPut)
+		server.Router.HandleFunc(apiResIDPath, server.WithResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Delete())))).Methods(http.MethodDelete)
 	}
 	// Static Route
 	server.Router.PathPrefix("/").Handler(server.Static())
