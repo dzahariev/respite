@@ -1,17 +1,11 @@
-package repo
+package common
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gofrs/uuid/v5"
 	"gorm.io/gorm"
-)
-
-const (
-	GLOBAL = "global"
 )
 
 var (
@@ -104,26 +98,4 @@ func getPage(request *http.Request) int {
 
 func getOffset(request *http.Request) int {
 	return (getPage(request) - 1) * getPageSize(request)
-}
-
-// getCurrentUserPermissions returns the current request user ID
-func getCurrentUserPermissions(request *http.Request) []string {
-	if request.Context().Value(CurrentUserPermissionsKey) == nil {
-		return nil
-	}
-	if permissions, ok := request.Context().Value(CurrentUserPermissionsKey).([]string); ok {
-		return permissions
-	}
-	return []string{}
-}
-
-// haveGlobalPermission is to check if the global permission for the resource is present in the list of permissions
-func haveGlobalPermission(resource string, permissions []string) bool {
-	for _, currentPermission := range permissions {
-		resourcePermission := fmt.Sprintf("%s.%s", resource, GLOBAL)
-		if strings.EqualFold(currentPermission, resourcePermission) {
-			return true
-		}
-	}
-	return false
 }

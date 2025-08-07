@@ -2,7 +2,7 @@ package basemodel
 
 import "context"
 
-// User
+// User is a base user
 type User struct {
 	Base
 	PreferedUserName string `json:"prefered_user_name"`

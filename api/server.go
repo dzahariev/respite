@@ -12,7 +12,7 @@ import (
 	"github.com/dzahariev/respite/auth"
 	"github.com/dzahariev/respite/basemodel"
 	"github.com/dzahariev/respite/cfg"
-	"github.com/dzahariev/respite/repo"
+	"github.com/dzahariev/respite/common"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -29,7 +29,7 @@ type Server struct {
 	DB                *gorm.DB
 	Router            *mux.Router
 	AuthClient        auth.Client
-	Resources         *repo.Resources
+	Resources         *common.Resources
 	RoleToPermissions map[string][]string
 }
 
@@ -41,8 +41,8 @@ func NewServer(serverConfig cfg.Server, logConfig cfg.Logger, dbConfig cfg.DataB
 	// Initialise logger
 	server.initLogger(logConfig)
 	// Initialise global configurations
-	repo.MaxPageSize = serverConfig.MaxPageSize
-	repo.MinPageSize = serverConfig.MinPageSize
+	common.MaxPageSize = serverConfig.MaxPageSize
+	common.MinPageSize = serverConfig.MinPageSize
 	// Store Auth Client
 	server.AuthClient = authClient
 	// Initlaise roles to permissions mapping
@@ -97,7 +97,7 @@ func (server *Server) initDB(dbConfig cfg.DataBase) error {
 
 // initResourceFactory is used to register all resources
 func (server *Server) initResourceFactory(modelObjects []basemodel.Object) {
-	server.Resources = &repo.Resources{Resources: map[string]repo.Resource{}}
+	server.Resources = &common.Resources{Resources: map[string]common.Resource{}}
 	// Register user resource
 	server.Resources.Register(&basemodel.User{})
 	// Register all other provided resources

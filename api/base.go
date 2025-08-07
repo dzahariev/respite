@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/dzahariev/respite/repo"
+	"github.com/dzahariev/respite/common"
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
 )
@@ -14,8 +14,8 @@ import (
 func (server *Server) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := repo.GetLogger(ctx)
-		repository := repo.GetRequestContext(ctx)
+		logger := common.GetLogger(ctx)
+		repository := common.GetRequestContext(ctx)
 		if repository == nil {
 			logger.Error("Error reading repository from context")
 			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading repository from context"))
@@ -38,8 +38,8 @@ func (server *Server) GetAll() http.HandlerFunc {
 func (server *Server) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := repo.GetLogger(ctx)
-		repository := repo.GetRequestContext(ctx)
+		logger := common.GetLogger(ctx)
+		repository := common.GetRequestContext(ctx)
 		if repository == nil {
 			logger.Error("Error reading repository from context")
 			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading repository from context"))
@@ -71,9 +71,9 @@ func (server *Server) Get() http.HandlerFunc {
 func (server *Server) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := repo.GetLogger(ctx)
+		logger := common.GetLogger(ctx)
 
-		repository := repo.GetRequestContext(ctx)
+		repository := common.GetRequestContext(ctx)
 		if repository == nil {
 			logger.Error("Error reading repository from context")
 			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading repository from context"))
@@ -104,9 +104,9 @@ func (server *Server) Create() http.HandlerFunc {
 func (server *Server) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := repo.GetLogger(ctx)
+		logger := common.GetLogger(ctx)
 
-		repository := repo.GetRequestContext(ctx)
+		repository := common.GetRequestContext(ctx)
 		if repository == nil {
 			logger.Error("Error reading repository from context")
 			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading repository from context"))
@@ -143,9 +143,9 @@ func (server *Server) Update() http.HandlerFunc {
 func (server *Server) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := repo.GetLogger(ctx)
+		logger := common.GetLogger(ctx)
 
-		repository := repo.GetRequestContext(ctx)
+		repository := common.GetRequestContext(ctx)
 		if repository == nil {
 			logger.Error("Error reading repository from context")
 			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading repository from context"))

@@ -1,25 +1,17 @@
-package repo
+package common
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/dzahariev/respite/basemodel"
 	"github.com/gofrs/uuid/v5"
 	"gorm.io/gorm"
-)
-
-// Define a custom type for context keys
-type contextKey string
-
-const (
-	LoggerKey                 contextKey = "LoggerKey"
-	RequestContextKey         contextKey = "RequestContextKey"
-	CurrentUserIDKey          contextKey = "CurrentUserIDKey"
-	CurrentUserPermissionsKey contextKey = "CurrentUserPermissionsKey"
 )
 
 type RequestContext struct {
@@ -201,4 +193,26 @@ func (requestContext *RequestContext) Delete(ctx context.Context, uid uuid.UUID)
 		return err
 	}
 	return nil
+}
+
+// getCurrentUserPermissions returns the current request user ID
+func getCurrentUserPermissions(request *http.Request) []string {
+	if request.Context().Value(CurrentUserPermissionsKey) == nil {
+		return nil
+	}
+	if permissions, ok := request.Context().Value(CurrentUserPermissionsKey).([]string); ok {
+		return permissions
+	}
+	return []string{}
+}
+
+// haveGlobalPermission is to check if the global permission for the resource is present in the list of permissions
+func haveGlobalPermission(resource string, permissions []string) bool {
+	for _, currentPermission := range permissions {
+		resourcePermission := fmt.Sprintf("%s.%s", resource, GLOBAL)
+		if strings.EqualFold(currentPermission, resourcePermission) {
+			return true
+		}
+	}
+	return false
 }

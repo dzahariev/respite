@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dzahariev/respite/repo"
+	"github.com/dzahariev/respite/common"
+
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -33,10 +34,10 @@ func (server *Server) Public(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // WithResource is a Middleware to narrow the context to this specific resource
-func (server *Server) WithResource(resource repo.Resource, next http.HandlerFunc) http.HandlerFunc {
+func (server *Server) WithResource(resource common.Resource, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		repository := repo.NewRequestContext(r, server.DB, resource, server.Resources)
-		ctx := context.WithValue(r.Context(), repo.RequestContextKey, repository)
+		requestContext := common.NewRequestContext(r, server.DB, resource, server.Resources)
+		ctx := context.WithValue(r.Context(), common.RequestContextKey, requestContext)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -45,12 +46,12 @@ func (server *Server) WithResource(resource repo.Resource, next http.HandlerFunc
 func (server *Server) Protected(permission string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := repo.GetLogger(ctx)
+		logger := common.GetLogger(ctx)
 
-		repository := repo.GetRequestContext(ctx)
-		if repository == nil {
-			logger.Error("Error reading repository from context in Protected middleware")
-			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading repository from context in Protected middleware"))
+		requestContext := common.GetRequestContext(ctx)
+		if requestContext == nil {
+			logger.Error("Error reading requestContext in Protected middleware")
+			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading requestContext in Protected middleware"))
 			return
 		}
 
@@ -99,7 +100,7 @@ func (server *Server) Protected(permission string, next http.HandlerFunc) http.H
 			return
 		}
 		// Create new context with current user
-		ctxWithUserID := context.WithValue(ctx, repo.CurrentUserIDKey, loadedUser.ID.String())
+		ctxWithUserID := context.WithValue(ctx, common.CurrentUserIDKey, loadedUser.ID.String())
 		// Get roles from token
 		roles, err := server.AuthClient.GetRolesFromToken(ctx, tokenString)
 		if err != nil {
@@ -112,16 +113,16 @@ func (server *Server) Protected(permission string, next http.HandlerFunc) http.H
 			permissions = append(permissions, server.RoleToPermissions[role]...)
 		}
 		// Create new context with current user permissions
-		ctxWithUserIDAndPermissions := context.WithValue(ctxWithUserID, repo.CurrentUserPermissionsKey, permissions)
+		ctxWithUserIDAndPermissions := context.WithValue(ctxWithUserID, common.CurrentUserPermissionsKey, permissions)
 		// Replace request context
 		rWithUpdatedContext := r.WithContext(ctxWithUserIDAndPermissions)
 		// Check permissions
-		if havePermission(repository.Resource.Name, permission, permissions) {
+		if havePermission(requestContext.Resource.Name, permission, permissions) {
 			next(w, rWithUpdatedContext)
 		} else {
 			// lack of permissions
-			logger.Error("Unauthorized request, no permission for resource", "resource", repository.Resource.Name, "permission", permission)
-			ERROR(w, http.StatusUnauthorized, fmt.Errorf("unauthorized, no permission for %s.%s", repository.Resource.Name, permission))
+			logger.Error("Unauthorized request, no permission for resource", "resource", requestContext.Resource.Name, "permission", permission)
+			ERROR(w, http.StatusUnauthorized, fmt.Errorf("unauthorized, no permission for %s.%s", requestContext.Resource.Name, permission))
 			return
 		}
 	}
@@ -132,7 +133,7 @@ func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.Must(uuid.NewV4()).String()
 		logger := slog.Default().With("request_id", reqID)
-		ctx := context.WithValue(r.Context(), repo.LoggerKey, logger)
+		ctx := context.WithValue(r.Context(), common.LoggerKey, logger)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
