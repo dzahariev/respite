@@ -16,76 +16,87 @@ import (
 type contextKey string
 
 const (
-	LOGGER                   contextKey = "logger"
-	CURRENT_USER_ID          contextKey = "currentUserID"
-	CURRENT_USER_PERMISSIONS contextKey = "currentUserPermissions"
+	LoggerKey                 contextKey = "LoggerKey"
+	RequestContextKey         contextKey = "RequestContextKey"
+	CurrentUserIDKey          contextKey = "CurrentUserIDKey"
+	CurrentUserPermissionsKey contextKey = "CurrentUserPermissionsKey"
 )
 
-type Repository struct {
+type RequestContext struct {
 	DB        *gorm.DB
 	DBScopes  DBScopes
+	Resource  Resource
 	Resources *Resources
 	RequestID uuid.UUID
 }
 
 // GetLogger is a helper to get logger from context or fallback
 func GetLogger(ctx context.Context) *slog.Logger {
-	if logger, ok := ctx.Value(LOGGER).(*slog.Logger); ok {
+	if logger, ok := ctx.Value(LoggerKey).(*slog.Logger); ok {
 		return logger
 	}
 	return slog.Default()
 }
 
-// NewRepository creates a new repository instance
-func NewRepository(pageSize, pageNumber, offset int, userID *uuid.UUID, resourceName string, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) Repository {
-	isGlobal := resources.IsGlobal(resourceName)
+// GetRequestContext is a helper to get RequestContext from context or nil if there is no such
+func GetRequestContext(ctx context.Context) *RequestContext {
+	if requestContext, ok := ctx.Value(RequestContextKey).(*RequestContext); ok {
+		return requestContext
+	}
+	return nil
+}
+
+// NewRequestContextWithDetails creates a new RequestContext instance
+func NewRequestContextWithDetails(pageSize, pageNumber, offset int, userID *uuid.UUID, resource Resource, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) RequestContext {
+	isGlobal := resources.IsGlobal(resource.Name)
 	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
 	requestDatabase := dataBase.Scopes(dbScopes.Paginate())
 	// If resource is not global and user do not have global permissions,
 	// we scope the database to only owned resources
-	if !isGlobal && !haveGlobalPermission(resourceName, currentUserPermissions) {
+	if !isGlobal && !haveGlobalPermission(resource.Name, currentUserPermissions) {
 		requestDatabase = dataBase.Scopes(dbScopes.Owned(), dbScopes.Paginate())
 	}
 
-	return Repository{
+	return RequestContext{
 		DB:        requestDatabase,
 		DBScopes:  dbScopes,
+		Resource:  resource,
 		Resources: resources,
 		RequestID: uuid.Must(uuid.NewV4()),
 	}
 }
 
-func NewRepositoryFromRequest(request *http.Request, dataBase *gorm.DB, resourceName string, resources *Resources) Repository {
-	isGlobal := resources.IsGlobal(resourceName)
+func NewRequestContext(request *http.Request, dataBase *gorm.DB, resource Resource, resources *Resources) RequestContext {
+	isGlobal := resources.IsGlobal(resource.Name)
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	currentUserPermissions := getCurrentUserPermissions(request)
 	logger := GetLogger(request.Context())
-	logger.Debug("Creating new repository", "resource", resourceName, "dbScopes", dbScopes, "userID", dbScopes.UserID, "global", isGlobal, "permissions", currentUserPermissions)
-	return NewRepository(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.UserID, resourceName, dataBase, resources, currentUserPermissions)
+	logger.Debug("Creating new repository", "resource", resource.Name, "dbScopes", dbScopes, "userID", dbScopes.UserID, "global", isGlobal, "permissions", currentUserPermissions)
+	return NewRequestContextWithDetails(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.UserID, resource, dataBase, resources, currentUserPermissions)
 }
 
 // GetAll retrieves all objects
-func (repository *Repository) GetAll(ctx context.Context, resourceName string) (*basemodel.List, error) {
+func (requestContext *RequestContext) GetAll(ctx context.Context) (*basemodel.List, error) {
 	var err error
-	object, err := repository.Resources.New(resourceName)
+	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	count, err := object.Count(ctx, repository.DB, object)
+	count, err := object.Count(ctx, requestContext.DB, object)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := object.FindAll(ctx, repository.DB, object)
+	data, err := object.FindAll(ctx, requestContext.DB, object)
 	if err != nil {
 		return nil, err
 	}
 
 	list := &basemodel.List{
 		Count:    count,
-		PageSize: repository.DBScopes.PageSize,
-		Page:     repository.DBScopes.Page,
+		PageSize: requestContext.DBScopes.PageSize,
+		Page:     requestContext.DBScopes.Page,
 		Data:     *data,
 	}
 
@@ -93,13 +104,13 @@ func (repository *Repository) GetAll(ctx context.Context, resourceName string) (
 }
 
 // Get loads an object by given ID
-func (repository *Repository) Get(ctx context.Context, resourceName string, uid uuid.UUID) (basemodel.Object, error) {
-	object, err := repository.Resources.New(resourceName)
+func (requestContext *RequestContext) Get(ctx context.Context, uid uuid.UUID) (basemodel.Object, error) {
+	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	err = object.FindByID(ctx, repository.DB, object, uid)
+	err = object.FindByID(ctx, requestContext.DB, object, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +118,8 @@ func (repository *Repository) Get(ctx context.Context, resourceName string, uid 
 }
 
 // Create is caled to create an object
-func (repository *Repository) Create(ctx context.Context, resourceName string, jsonObject []byte) (basemodel.Object, error) {
-	object, err := repository.Resources.New(resourceName)
+func (requestContext *RequestContext) Create(ctx context.Context, jsonObject []byte) (basemodel.Object, error) {
+	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +134,8 @@ func (repository *Repository) Create(ctx context.Context, resourceName string, j
 		return nil, err
 	}
 
-	if !repository.DBScopes.Global {
-		ownerUUID := repository.DBScopes.UserID
+	if !requestContext.DBScopes.Global {
+		ownerUUID := requestContext.DBScopes.UserID
 		if ownerUUID == nil {
 			return nil, err
 		}
@@ -132,7 +143,7 @@ func (repository *Repository) Create(ctx context.Context, resourceName string, j
 		objectAsLocalObject.SetUserID(*ownerUUID)
 	}
 
-	err = object.Save(ctx, repository.DB, object)
+	err = object.Save(ctx, requestContext.DB, object)
 
 	if err != nil {
 		return nil, err
@@ -141,9 +152,9 @@ func (repository *Repository) Create(ctx context.Context, resourceName string, j
 	return object, nil
 }
 
-// UpdateBook updates existing object
-func (repository *Repository) Update(ctx context.Context, resourceName string, uid uuid.UUID, jsonObject []byte) (basemodel.Object, error) {
-	object, err := repository.Resources.New(resourceName)
+// Update updates existing object
+func (requestContext *RequestContext) Update(ctx context.Context, uid uuid.UUID, jsonObject []byte) (basemodel.Object, error) {
+	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -159,14 +170,14 @@ func (repository *Repository) Update(ctx context.Context, resourceName string, u
 	}
 
 	recordExisting := reflect.New(reflect.TypeOf(object).Elem()).Interface().(basemodel.Object)
-	err = recordExisting.FindByID(ctx, repository.DB, recordExisting, uid)
+	err = recordExisting.FindByID(ctx, requestContext.DB, recordExisting, uid)
 	if err != nil {
 		return nil, err
 	}
 
 	object.SetID(uid)
 
-	err = object.Update(ctx, repository.DB, object)
+	err = object.Update(ctx, requestContext.DB, object)
 	if err != nil {
 		return nil, err
 	}
@@ -174,18 +185,18 @@ func (repository *Repository) Update(ctx context.Context, resourceName string, u
 }
 
 // Delete deletes an object
-func (repository *Repository) Delete(ctx context.Context, resourceName string, uid uuid.UUID) error {
-	object, err := repository.Resources.New(resourceName)
+func (requestContext *RequestContext) Delete(ctx context.Context, uid uuid.UUID) error {
+	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return err
 	}
 
-	err = object.FindByID(ctx, repository.DB, object, uid)
+	err = object.FindByID(ctx, requestContext.DB, object, uid)
 	if err != nil {
 		return err
 	}
 
-	err = object.Delete(ctx, repository.DB, object)
+	err = object.Delete(ctx, requestContext.DB, object)
 	if err != nil {
 		return err
 	}
