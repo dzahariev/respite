@@ -118,11 +118,11 @@ func (server *Server) initRouter() {
 	for _, resource := range server.Resources.Resources {
 		apiResPath := fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name)
 		apiResIDPath := fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name)
-		server.Router.HandleFunc(apiResPath, server.ForResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Create())))).Methods(http.MethodPost)
-		server.Router.HandleFunc(apiResPath, server.ForResource(resource, server.Protected(READ, ContentTypeJSON(server.GetAll())))).Methods(http.MethodGet)
-		server.Router.HandleFunc(apiResIDPath, server.ForResource(resource, server.Protected(READ, ContentTypeJSON(server.Get())))).Methods(http.MethodGet)
-		server.Router.HandleFunc(apiResIDPath, server.ForResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Update())))).Methods(http.MethodPut)
-		server.Router.HandleFunc(apiResIDPath, server.ForResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Delete())))).Methods(http.MethodDelete)
+		server.Router.HandleFunc(apiResPath, server.Protected(WRITE, resource, ContentTypeJSON(server.Create()))).Methods(http.MethodPost)
+		server.Router.HandleFunc(apiResPath, server.Protected(READ, resource, ContentTypeJSON(server.GetAll()))).Methods(http.MethodGet)
+		server.Router.HandleFunc(apiResIDPath, server.Protected(READ, resource, ContentTypeJSON(server.Get()))).Methods(http.MethodGet)
+		server.Router.HandleFunc(apiResIDPath, server.Protected(WRITE, resource, ContentTypeJSON(server.Update()))).Methods(http.MethodPut)
+		server.Router.HandleFunc(apiResIDPath, server.Protected(WRITE, resource, ContentTypeJSON(server.Delete()))).Methods(http.MethodDelete)
 	}
 	// Static Route
 	server.Router.PathPrefix("/").Handler(server.Static())

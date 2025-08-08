@@ -8,6 +8,6 @@ const (
 
 	LoggerKey                 contextKey = "LoggerKey"
 	RequestContextKey         contextKey = "RequestContextKey"
-	CurrentUserIDKey          contextKey = "CurrentUserIDKey"
+	CurrentUserKey            contextKey = "CurrentUserKey"
 	CurrentUserPermissionsKey contextKey = "CurrentUserPermissionsKey"
 )

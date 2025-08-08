@@ -33,27 +33,11 @@ func (server *Server) Public(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// ForResource is a Middleware to narrow the context to this specific resource
-func (server *Server) ForResource(resource common.Resource, next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestContext := common.NewRequestContext(r, server.DB, resource, server.Resources)
-		ctx := context.WithValue(r.Context(), common.RequestContextKey, requestContext)
-		next(w, r.WithContext(ctx))
-	})
-}
-
 // Protected is a Wrapper for protected and Global resources
-func (server *Server) Protected(permission string, next http.HandlerFunc) http.HandlerFunc {
+func (server *Server) Protected(permission string, resource common.Resource, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := common.GetLogger(ctx)
-
-		requestContext := common.GetRequestContext(ctx)
-		if requestContext == nil {
-			logger.Error("Error reading requestContext in Protected middleware")
-			ERROR(w, http.StatusInternalServerError, fmt.Errorf("error reading requestContext in Protected middleware"))
-			return
-		}
 
 		// Parse token
 		authHeader := r.Header.Get("Authorization")
@@ -71,14 +55,14 @@ func (server *Server) Protected(permission string, next http.HandlerFunc) http.H
 		// Verify token is valid
 		tokenString := authHeader[7:]
 		tokenString = strings.TrimSpace(tokenString)
-		err := server.AuthClient.RetrospectToken(r.Context(), tokenString)
+		err := server.AuthClient.RetrospectToken(ctx, tokenString)
 		if err != nil {
 			logger.Error("Unauthorized request, invalid token", "error", err)
 			ERROR(w, http.StatusUnauthorized, err)
 			return
 		}
 		// Create user if not exists
-		userFromInfo, err := server.AuthClient.GetUserFromToken(r.Context(), tokenString)
+		userFromInfo, err := server.AuthClient.GetUserFromToken(ctx, tokenString)
 		if err != nil {
 			logger.Error("Unauthorized request, cannot get user from token", "error", err)
 			ERROR(w, http.StatusUnauthorized, err)
@@ -99,10 +83,11 @@ func (server *Server) Protected(permission string, next http.HandlerFunc) http.H
 			ERROR(w, http.StatusUnauthorized, err)
 			return
 		}
+
 		// Create new context with current user
-		ctxWithUserID := context.WithValue(ctx, common.CurrentUserIDKey, loadedUser.ID.String())
+		ctxWithUser := context.WithValue(ctx, common.CurrentUserKey, loadedUser)
 		// Get roles from token
-		roles, err := server.AuthClient.GetRolesFromToken(ctx, tokenString)
+		roles, err := server.AuthClient.GetRolesFromToken(ctxWithUser, tokenString)
 		if err != nil {
 			logger.Error("Unauthorized request, cannot get roles from token", "error", err)
 			ERROR(w, http.StatusUnauthorized, err)
@@ -113,16 +98,24 @@ func (server *Server) Protected(permission string, next http.HandlerFunc) http.H
 			permissions = append(permissions, server.RoleToPermissions[role]...)
 		}
 		// Create new context with current user permissions
-		ctxWithUserIDAndPermissions := context.WithValue(ctxWithUserID, common.CurrentUserPermissionsKey, permissions)
+		ctxWithUserPerm := context.WithValue(ctxWithUser, common.CurrentUserPermissionsKey, permissions)
+
 		// Replace request context
-		rWithUpdatedContext := r.WithContext(ctxWithUserIDAndPermissions)
+		rWithUserPerm := r.WithContext(ctxWithUserPerm)
+
+		requestContext := common.NewRequestContext(rWithUserPerm, server.DB, resource, server.Resources)
+		ctxWithUserPermRC := context.WithValue(ctxWithUserPerm, common.RequestContextKey, requestContext)
+
+		// Replace request context
+		rWithUserPermRC := r.WithContext(ctxWithUserPermRC)
+
 		// Check permissions
-		if havePermission(requestContext.Resource.Name, permission, permissions) {
-			next(w, rWithUpdatedContext)
+		if havePermission(resource.Name, permission, permissions) {
+			next(w, rWithUserPermRC)
 		} else {
 			// lack of permissions
-			logger.Error("Unauthorized request, no permission for resource", "resource", requestContext.Resource.Name, "permission", permission)
-			ERROR(w, http.StatusUnauthorized, fmt.Errorf("unauthorized, no permission for %s.%s", requestContext.Resource.Name, permission))
+			logger.Error("Unauthorized request, no permission for resource", "resource", resource.Name, "permission", permission)
+			ERROR(w, http.StatusUnauthorized, fmt.Errorf("unauthorized, no permission for %s.%s", resource.Name, permission))
 			return
 		}
 	}
