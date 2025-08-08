@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gofrs/uuid/v5"
+	"github.com/dzahariev/respite/domain"
 	"gorm.io/gorm"
 )
 
@@ -17,16 +17,16 @@ type DBScopes struct {
 	PageSize int
 	Page     int
 	Offset   int
-	UserID   *uuid.UUID
+	User     *domain.User
 	Global   bool
 }
 
-func NewDBScopes(pageSize, pageNumber, offset int, userID *uuid.UUID, isGlobal bool) DBScopes {
+func NewDBScopes(pageSize, pageNumber, offset int, user *domain.User, isGlobal bool) DBScopes {
 	return DBScopes{
 		PageSize: pageSize,
 		Page:     pageNumber,
 		Offset:   offset,
-		UserID:   userID,
+		User:     user,
 		Global:   isGlobal,
 	}
 }
@@ -36,7 +36,7 @@ func NewDBScopesFromRequest(request *http.Request, isGlobal bool) DBScopes {
 		PageSize: getPageSize(request),
 		Page:     getPage(request),
 		Offset:   getOffset(request),
-		UserID:   getCurrentUserID(request),
+		User:     getCurrentUser(request),
 		Global:   isGlobal,
 	}
 }
@@ -52,25 +52,20 @@ func (dbs *DBScopes) Owned() func(db *gorm.DB) *gorm.DB {
 		if dbs.Global {
 			return db
 		} else {
-			return db.Where("user_id = ?", dbs.UserID)
+			return db.Where("user_id = ?", dbs.User.ID.String())
 		}
 	}
 }
 
-// getCurrentUserID returns the current request user ID
-func getCurrentUserID(request *http.Request) *uuid.UUID {
-	if request.Context().Value(CurrentUserIDKey) == nil {
+// getCurrentUser returns the current request user ID
+func getCurrentUser(request *http.Request) *domain.User {
+	logger := GetLogger(request.Context())
+	if request.Context().Value(CurrentUserKey) == nil {
+		logger.Debug("Missing user in context")
 		return nil
 	}
-	if userID, ok := request.Context().Value(CurrentUserIDKey).(string); ok {
-		if userID == "" {
-			return nil
-		}
-		id, err := uuid.FromString(userID)
-		if err != nil {
-			return nil
-		}
-		return &id
+	if user, ok := request.Context().Value(CurrentUserKey).(*domain.User); ok {
+		return user
 	}
 	return nil
 }

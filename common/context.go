@@ -39,9 +39,9 @@ func GetRequestContext(ctx context.Context) *RequestContext {
 }
 
 // NewRequestContextWithDetails creates a new RequestContext instance
-func NewRequestContextWithDetails(pageSize, pageNumber, offset int, userID *uuid.UUID, resource Resource, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) *RequestContext {
+func NewRequestContextWithDetails(pageSize, pageNumber, offset int, user *domain.User, resource Resource, dataBase *gorm.DB, resources *Resources, currentUserPermissions []string) *RequestContext {
 	isGlobal := resources.IsGlobal(resource.Name)
-	dbScopes := NewDBScopes(pageSize, pageNumber, offset, userID, isGlobal)
+	dbScopes := NewDBScopes(pageSize, pageNumber, offset, user, isGlobal)
 	requestDatabase := dataBase.Scopes(dbScopes.Paginate())
 	// If resource is not global and user do not have global permissions,
 	// we scope the database to only owned resources
@@ -63,8 +63,8 @@ func NewRequestContext(request *http.Request, dataBase *gorm.DB, resource Resour
 	dbScopes := NewDBScopesFromRequest(request, isGlobal)
 	currentUserPermissions := getCurrentUserPermissions(request)
 	logger := GetLogger(request.Context())
-	logger.Debug("Creating new request context", "resource", resource.Name, "dbScopes", dbScopes, "userID", dbScopes.UserID, "global", isGlobal, "permissions", currentUserPermissions)
-	return NewRequestContextWithDetails(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.UserID, resource, dataBase, resources, currentUserPermissions)
+	logger.Debug("Creating new request context", "resource", resource.Name, "dbScopes", dbScopes, "userID", dbScopes.User, "global", isGlobal, "permissions", currentUserPermissions)
+	return NewRequestContextWithDetails(dbScopes.PageSize, dbScopes.Page, dbScopes.Offset, dbScopes.User, resource, dataBase, resources, currentUserPermissions)
 }
 
 // GetAll retrieves all objects
@@ -127,12 +127,12 @@ func (requestContext *RequestContext) Create(ctx context.Context, jsonObject []b
 	}
 
 	if !requestContext.DBScopes.Global {
-		ownerUUID := requestContext.DBScopes.UserID
-		if ownerUUID == nil {
+		ownerUser := requestContext.DBScopes.User
+		if ownerUser == nil {
 			return nil, err
 		}
 		objectAsLocalObject := object.(domain.LocalObject)
-		objectAsLocalObject.SetUserID(*ownerUUID)
+		objectAsLocalObject.SetUserID(ownerUser.ID)
 	}
 
 	err = object.Save(ctx, requestContext.DB, object)
