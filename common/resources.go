@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/dzahariev/respite/basemodel"
+	"github.com/dzahariev/respite/domain"
 )
 
 // Resource represent a resource entity in the system.
@@ -20,7 +20,7 @@ type Resources struct {
 }
 
 // Register is used to register a resource type
-func (resources *Resources) Register(object basemodel.Object) {
+func (resources *Resources) Register(object domain.Object) {
 	name := object.ResourceName()
 	isGlobal := object.IsGlobal()
 	objectType := reflect.TypeOf(object).Elem()
@@ -41,13 +41,13 @@ func (resources *Resources) Names() []string {
 }
 
 // New is used to create a new resource object
-func (resources *Resources) New(name string) (basemodel.Object, error) {
+func (resources *Resources) New(name string) (domain.Object, error) {
 	t, ok := resources.Resources[name]
 	if !ok {
 		return nil, fmt.Errorf("unrecognized resource name: %s", name)
 	}
 
-	obj, ok := reflect.New(t.Type).Interface().(basemodel.Object)
+	obj, ok := reflect.New(t.Type).Interface().(domain.Object)
 	if !ok {
 		return nil, fmt.Errorf("type %s does not implement model.Object", t.Type)
 	}

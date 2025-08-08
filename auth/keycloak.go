@@ -6,7 +6,7 @@ import (
 
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/Nerzal/gocloak/v13/pkg/jwx"
-	"github.com/dzahariev/respite/basemodel"
+	"github.com/dzahariev/respite/domain"
 	"github.com/dzahariev/respite/cfg"
 	"github.com/gofrs/uuid/v5"
 )
@@ -53,7 +53,7 @@ func (authClient *KeycloakClient) GetRolesFromToken(ctx context.Context, accessT
 }
 
 // GetUserFromToken creates user entity from user info in token
-func (authClient *KeycloakClient) GetUserFromToken(ctx context.Context, accessToken string) (*basemodel.User, error) {
+func (authClient *KeycloakClient) GetUserFromToken(ctx context.Context, accessToken string) (*domain.User, error) {
 	jwxClaims := &jwx.Claims{}
 	_, err := authClient.Client.DecodeAccessTokenCustomClaims(ctx, accessToken, authClient.Realm, jwxClaims)
 	if err != nil {
@@ -65,8 +65,8 @@ func (authClient *KeycloakClient) GetUserFromToken(ctx context.Context, accessTo
 		return nil, err
 	}
 
-	user := &basemodel.User{
-		Base: basemodel.Base{
+	user := &domain.User{
+		Base: domain.Base{
 			ID: uid,
 		},
 		PreferedUserName: jwxClaims.PreferredUsername,

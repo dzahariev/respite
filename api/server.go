@@ -10,9 +10,9 @@ import (
 	"syscall"
 
 	"github.com/dzahariev/respite/auth"
-	"github.com/dzahariev/respite/basemodel"
 	"github.com/dzahariev/respite/cfg"
 	"github.com/dzahariev/respite/common"
+	"github.com/dzahariev/respite/domain"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -33,7 +33,7 @@ type Server struct {
 	RoleToPermissions map[string][]string
 }
 
-func NewServer(serverConfig cfg.Server, logConfig cfg.Logger, dbConfig cfg.DataBase, modelObjects []basemodel.Object, authClient auth.Client, roleToPermissions map[string][]string) (*Server, error) {
+func NewServer(serverConfig cfg.Server, logConfig cfg.Logger, dbConfig cfg.DataBase, modelObjects []domain.Object, authClient auth.Client, roleToPermissions map[string][]string) (*Server, error) {
 	// Initialise server instance
 	server := &Server{}
 	// Keep configuration
@@ -96,10 +96,10 @@ func (server *Server) initDB(dbConfig cfg.DataBase) error {
 }
 
 // initResourceFactory is used to register all resources
-func (server *Server) initResourceFactory(modelObjects []basemodel.Object) {
+func (server *Server) initResourceFactory(modelObjects []domain.Object) {
 	server.Resources = &common.Resources{Resources: map[string]common.Resource{}}
 	// Register user resource
-	server.Resources.Register(&basemodel.User{})
+	server.Resources.Register(&domain.User{})
 	// Register all other provided resources
 	for _, modelObject := range modelObjects {
 		server.Resources.Register(modelObject)
@@ -118,11 +118,11 @@ func (server *Server) initRouter() {
 	for _, resource := range server.Resources.Resources {
 		apiResPath := fmt.Sprintf("/%s/%s", server.ServerConfig.APIPath, resource.Name)
 		apiResIDPath := fmt.Sprintf("/%s/%s/{id}", server.ServerConfig.APIPath, resource.Name)
-		server.Router.HandleFunc(apiResPath, server.WithResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Create())))).Methods(http.MethodPost)
-		server.Router.HandleFunc(apiResPath, server.WithResource(resource, server.Protected(READ, ContentTypeJSON(server.GetAll())))).Methods(http.MethodGet)
-		server.Router.HandleFunc(apiResIDPath, server.WithResource(resource, server.Protected(READ, ContentTypeJSON(server.Get())))).Methods(http.MethodGet)
-		server.Router.HandleFunc(apiResIDPath, server.WithResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Update())))).Methods(http.MethodPut)
-		server.Router.HandleFunc(apiResIDPath, server.WithResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Delete())))).Methods(http.MethodDelete)
+		server.Router.HandleFunc(apiResPath, server.ForResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Create())))).Methods(http.MethodPost)
+		server.Router.HandleFunc(apiResPath, server.ForResource(resource, server.Protected(READ, ContentTypeJSON(server.GetAll())))).Methods(http.MethodGet)
+		server.Router.HandleFunc(apiResIDPath, server.ForResource(resource, server.Protected(READ, ContentTypeJSON(server.Get())))).Methods(http.MethodGet)
+		server.Router.HandleFunc(apiResIDPath, server.ForResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Update())))).Methods(http.MethodPut)
+		server.Router.HandleFunc(apiResIDPath, server.ForResource(resource, server.Protected(WRITE, ContentTypeJSON(server.Delete())))).Methods(http.MethodDelete)
 	}
 	// Static Route
 	server.Router.PathPrefix("/").Handler(server.Static())

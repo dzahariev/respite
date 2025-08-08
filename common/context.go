@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/dzahariev/respite/basemodel"
+	"github.com/dzahariev/respite/domain"
 	"github.com/gofrs/uuid/v5"
 	"gorm.io/gorm"
 )
@@ -68,7 +68,7 @@ func NewRequestContext(request *http.Request, dataBase *gorm.DB, resource Resour
 }
 
 // GetAll retrieves all objects
-func (requestContext *RequestContext) GetAll(ctx context.Context) (*basemodel.List, error) {
+func (requestContext *RequestContext) GetAll(ctx context.Context) (*domain.List, error) {
 	var err error
 	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
@@ -85,7 +85,7 @@ func (requestContext *RequestContext) GetAll(ctx context.Context) (*basemodel.Li
 		return nil, err
 	}
 
-	list := &basemodel.List{
+	list := &domain.List{
 		Count:    count,
 		PageSize: requestContext.DBScopes.PageSize,
 		Page:     requestContext.DBScopes.Page,
@@ -96,7 +96,7 @@ func (requestContext *RequestContext) GetAll(ctx context.Context) (*basemodel.Li
 }
 
 // Get loads an object by given ID
-func (requestContext *RequestContext) Get(ctx context.Context, uid uuid.UUID) (basemodel.Object, error) {
+func (requestContext *RequestContext) Get(ctx context.Context, uid uuid.UUID) (domain.Object, error) {
 	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (requestContext *RequestContext) Get(ctx context.Context, uid uuid.UUID) (b
 }
 
 // Create is caled to create an object
-func (requestContext *RequestContext) Create(ctx context.Context, jsonObject []byte) (basemodel.Object, error) {
+func (requestContext *RequestContext) Create(ctx context.Context, jsonObject []byte) (domain.Object, error) {
 	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (requestContext *RequestContext) Create(ctx context.Context, jsonObject []b
 		if ownerUUID == nil {
 			return nil, err
 		}
-		objectAsLocalObject := object.(basemodel.LocalObject)
+		objectAsLocalObject := object.(domain.LocalObject)
 		objectAsLocalObject.SetUserID(*ownerUUID)
 	}
 
@@ -145,7 +145,7 @@ func (requestContext *RequestContext) Create(ctx context.Context, jsonObject []b
 }
 
 // Update updates existing object
-func (requestContext *RequestContext) Update(ctx context.Context, uid uuid.UUID, jsonObject []byte) (basemodel.Object, error) {
+func (requestContext *RequestContext) Update(ctx context.Context, uid uuid.UUID, jsonObject []byte) (domain.Object, error) {
 	object, err := requestContext.Resources.New(requestContext.Resource.Name)
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (requestContext *RequestContext) Update(ctx context.Context, uid uuid.UUID,
 		return nil, err
 	}
 
-	recordExisting := reflect.New(reflect.TypeOf(object).Elem()).Interface().(basemodel.Object)
+	recordExisting := reflect.New(reflect.TypeOf(object).Elem()).Interface().(domain.Object)
 	err = recordExisting.FindByID(ctx, requestContext.DB, recordExisting, uid)
 	if err != nil {
 		return nil, err

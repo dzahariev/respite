@@ -33,8 +33,8 @@ func (server *Server) Public(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WithResource is a Middleware to narrow the context to this specific resource
-func (server *Server) WithResource(resource common.Resource, next http.HandlerFunc) http.HandlerFunc {
+// ForResource is a Middleware to narrow the context to this specific resource
+func (server *Server) ForResource(resource common.Resource, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestContext := common.NewRequestContext(r, server.DB, resource, server.Resources)
 		ctx := context.WithValue(r.Context(), common.RequestContextKey, requestContext)
