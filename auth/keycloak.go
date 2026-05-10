@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Nerzal/gocloak/v13"
-	"github.com/Nerzal/gocloak/v13/pkg/jwx"
-	"github.com/dzahariev/respite/domain"
+	"github.com/Nerzal/gocloak/v14"
+	"github.com/Nerzal/gocloak/v14/pkg/jwx"
 	"github.com/dzahariev/respite/cfg"
+	"github.com/dzahariev/respite/domain"
 	"github.com/gofrs/uuid/v5"
 )
 
