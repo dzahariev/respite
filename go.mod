@@ -3,7 +3,7 @@ module github.com/dzahariev/respite
 go 1.25.0
 
 require (
-	github.com/Nerzal/gocloak/v14 v14.0.3
+	github.com/Nerzal/gocloak/v14 v14.0.4
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/gorilla/mux v1.8.1
 	gorm.io/driver/postgres v1.6.0
@@ -22,9 +22,9 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/mod v0.35.0 // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
