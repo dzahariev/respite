@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/Nerzal/gocloak/v14 v14.0.4
-	github.com/gofrs/uuid/v5 v5.5.0
+	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/gorilla/mux v1.8.1
 	gorm.io/driver/postgres v1.6.2
 	gorm.io/gorm v1.31.2
